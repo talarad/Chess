@@ -1,13 +1,11 @@
-import React from 'react';
-import logo from './logo.svg';
-import './App.css';
+import React from "react";
+import "./App.css";
+import { Board } from "./Board";
 
-function App() {
+export default function App() {
   return (
-    <div className="App">
-      dsdfsd
+    <div>
+      <Board />
     </div>
   );
 }
-
-export default App;
