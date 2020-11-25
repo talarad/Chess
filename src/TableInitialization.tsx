@@ -19,18 +19,15 @@ for (let i = 0; i < 8; i++) {
     }
 
     if (i <= 1) {
-      cell.color = "white";
+      cell.color = "black";
     }
     if (i >= 6) {
-      cell.color = "black";
+      cell.color = "white";
     }
 
     table[i].push(cell);
   }
 }
-
-table[0][7].value = "rook";
-table[0][7].color = "white";
 
 table[0][7].value = "rook";
 table[0][0].value = "rook";
