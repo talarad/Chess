@@ -47,6 +47,83 @@ export const Board: React.FC<AppProps> = (props) => {
   const [possibleMoves, updatePossibleMoves] = React.useState<Boolean[][]>(
     initArray()
   );
+  const [whiteKingPosition, updateWhiteKingPosition] = React.useState<{
+    row: number;
+    column: number;
+  }>({
+    row: 7,
+    column: 4,
+  });
+  const [blackKingPosition, updateBlackKingPosition] = React.useState<{
+    row: number;
+    column: number;
+  }>({
+    row: 0,
+    column: 4,
+  });
+
+  const KingMove = (clickedRow: number, clickedColumn: number) => {
+    const isValidMove = PiecesMovingLogic(
+      board,
+      clickedRow,
+      clickedColumn,
+      markedCell.row,
+      markedCell.column
+    );
+
+    if (isValidMove) {
+      var boardString = JSON.stringify(board);
+      var dummyBoard = JSON.parse(boardString);
+
+      var piece = mapToPiece(dummyBoard[markedCell.row][markedCell.column]);
+      dummyBoard[clickedRow][clickedColumn] = piece;
+      dummyBoard[markedCell.row][markedCell.column].color = "";
+      dummyBoard[markedCell.row][markedCell.column].value = "";
+      dummyBoard[markedCell.row][markedCell.column].isFirstMove = false;
+      dummyBoard[markedCell.row][markedCell.column].isCellMarked = false;
+
+      piece.isFirstMove = false;
+      piece.isCellMarked = false;
+
+      for (let row = 0; row < 8; row++) {
+        for (let column = 0; column < 8; column++) {
+          if (props.currentTurn === "white") {
+            if (dummyBoard[row][column].color === "black") {
+              const isChess = PiecesMovingLogic(
+                dummyBoard,
+                whiteKingPosition.row,
+                whiteKingPosition.column,
+                row,
+                column
+              );
+
+              if (isChess) {
+                console.log("CHESS!");
+                return true;
+              }
+            }
+          } else {
+            if (dummyBoard[row][column].color === "white") {
+              const isChess = PiecesMovingLogic(
+                dummyBoard,
+                blackKingPosition.row,
+                blackKingPosition.column,
+                row,
+                column
+              );
+
+              if (isChess) {
+                console.log("CHESS!");
+                return true;
+              }
+            }
+          }
+        }
+      }
+    }
+
+    return false;
+  };
 
   const SameColoredCellClickedWhileAnotherIsMarked = (
     row: number,
@@ -66,6 +143,9 @@ export const Board: React.FC<AppProps> = (props) => {
   };
 
   const PieceMoveClicked = (row: number, column: number) => {
+    const willCauseChess = KingMove(row, column);
+    if (willCauseChess) return;
+
     const isValidMove = PiecesMovingLogic(
       board,
       row,
@@ -117,8 +197,7 @@ export const Board: React.FC<AppProps> = (props) => {
     for (let i = 0; i < 8; i++) {
       for (let j = 0; j < 8; j++) {
         const isValidMove = PiecesMovingLogic(board, i, j, row, column);
-
-        if (isValidMove) {
+        if (isValidMove && board[i][j].color !== board[row][column].color) {
           hoverBoard[i][j] = true;
         }
       }
@@ -174,7 +253,12 @@ export const Board: React.FC<AppProps> = (props) => {
               },
               columnIndex
             ) => {
-              const borderColor = cell.isCellMarked ? "yellow" : "white";
+              const borderColor = cell.isCellMarked
+                ? "yellow"
+                : possibleMoves[rowIndex][columnIndex]
+                ? "red"
+                : "white";
+
               if (cell.value !== "") {
                 return (
                   <td

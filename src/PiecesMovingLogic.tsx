@@ -158,8 +158,6 @@ const isPawnValidMove = () => {
         Math.abs(clickedColumn - currentColumn) === 1 &&
         board[clickedRow][clickedColumn].value !== ""
       ) {
-        console.log(4);
-
         return true;
       }
     }

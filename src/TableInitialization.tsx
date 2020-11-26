@@ -14,14 +14,14 @@ for (let i = 0; i < 8; i++) {
       color: "",
       isFirstMove: true,
     };
-    if (i === 1 || i === 6) {
-      cell.value = "pawn";
-    }
+    // if (i === 1 || i === 6) {
+    //   cell.value = "pawn";
+    // }
 
-    if (i <= 1) {
+    if (i <= 0) {
       cell.color = "black";
     }
-    if (i >= 6) {
+    if (i >= 7) {
       cell.color = "white";
     }
 
