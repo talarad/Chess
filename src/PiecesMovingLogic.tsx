@@ -71,8 +71,9 @@ const isKingValidMove = () => {
   if (
     Math.abs(clickedRow - currentRow) <= 1 &&
     Math.abs(clickedColumn - currentColumn) <= 1
-  )
+  ) {
     return true;
+  }
 
   return false;
 };
