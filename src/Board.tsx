@@ -4,6 +4,15 @@ import firstTable from "./TableInitialization";
 import PiecesMovingLogic from "./PiecesMovingLogic";
 import Cell from "./Cell";
 import initArray from "./InitArray";
+import isValidMove from "./PiecesMovingLogic";
+import { createModuleResolutionCache } from "typescript";
+
+type CellProps = {
+  value: string;
+  isCellMarked: boolean;
+  color: string;
+  isFirstMove: boolean;
+};
 
 type AppProps = {
   currentTurn: string;
@@ -54,6 +63,16 @@ export const Board: React.FC<AppProps> = (props) => {
     color: "",
   });
 
+  // React.useEffect(() => {
+  //   isCheckOnWhite();
+  //   isCheckOnBlack();
+  //   var isFinished: boolean | undefined;
+  //   if (check.isChecked) {
+  //     isFinished = isCheckMate();
+  //     if (isFinished) console.log("VICTORY");
+  //   }
+  // });
+
   const willMoveCauseSelfCheck = (
     clickedRow: number,
     clickedColumn: number,
@@ -82,133 +101,89 @@ export const Board: React.FC<AppProps> = (props) => {
       piece.isFirstMove = false;
       piece.isCellMarked = false;
 
-      for (let row = 0; row < 8; row++) {
-        for (let column = 0; column < 8; column++) {
-          if (piece.color === "white") {
-            if (dummyBoard[row][column].color === "black") {
-              console.log(piece);
-              const isChess = PiecesMovingLogic(
-                dummyBoard,
-                piece.value === "king" ? clickedRow : whiteKingPosition.row,
-                piece.value === "king"
-                  ? clickedColumn
-                  : whiteKingPosition.column,
-                row,
-                column
-              );
+      const isCheck =
+        board[currentRowLoc][currentColumnLoc].color === "white"
+          ? isCheckOnWhite(dummyBoard, clickedRow, clickedColumn)
+          : isCheckOnBlack(dummyBoard, clickedRow, clickedColumn);
 
-              if (isChess) {
-                updateIsChecked({ isChecked: true, color: "white" });
-                console.log("white CHECK!");
-                return true;
-              }
-            }
-          } else {
-            if (dummyBoard[row][column].color === "white") {
-              const isChess = PiecesMovingLogic(
-                dummyBoard,
-                piece.value === "king" ? clickedRow : blackKingPosition.row,
-                piece.value === "king"
-                  ? clickedColumn
-                  : blackKingPosition.column,
-                row,
-                column
-              );
-
-              if (isChess) {
-                updateIsChecked({ isChecked: true, color: "black" });
-                console.log("black CHECK!");
-                return true;
-              }
-            }
-          }
-        }
+      if (!isCheck) {
+        updateIsChecked({ isChecked: false, color: "" });
       }
-    }
 
-    updateIsChecked({ isChecked: false, color: "" });
-    return false;
-  };
-
-  const isKingMovePossible = () => {
-    for (let row = 0; row < 8; row++) {
-      for (let column = 0; column < 8; column++) {
-        if (board[row][column].color === "black") {
-          const isChess = PiecesMovingLogic(
-            board,
-            whiteKingPosition.row,
-            whiteKingPosition.column,
-            row,
-            column
-          );
-
-          if (isChess) {
-            console.log("white CHECK!");
-            return false;
-          }
-        }
-      }
-    }
-    for (let row = 0; row < 8; row++) {
-      for (let column = 0; column < 8; column++) {
-        if (board[row][column].color === "white") {
-          const isChess = PiecesMovingLogic(
-            board,
-            blackKingPosition.row,
-            blackKingPosition.column,
-            row,
-            column
-          );
-
-          if (isChess) {
-            console.log("black CHECK!");
-            return false;
-          }
-        }
-      }
+      return isCheck;
     }
 
     return true;
   };
 
-  const isCheckToNextTurn = () => {
-    if (props.currentTurn === "black") {
-      for (let row = 0; row < 8; row++) {
-        for (let column = 0; column < 8; column++) {
-          if (board[row][column].color === "black") {
-            const isChess = PiecesMovingLogic(
-              board,
-              whiteKingPosition.row,
-              whiteKingPosition.column,
-              row,
-              column
-            );
+  const isCheckOnWhite = (
+    dummyBoard: BoardProps[][] = board,
+    clickedRow: number | undefined = undefined,
+    clickedColumn: number | undefined = undefined
+  ) => {
+    var isKingMove = false;
+    if (clickedColumn !== undefined && clickedRow !== undefined) {
+      isKingMove =
+        dummyBoard[clickedRow][clickedColumn].value === "king" &&
+        dummyBoard[clickedRow][clickedColumn].color === "white";
+    }
 
-            if (isChess) {
+    for (let row = 0; row < 8; row++) {
+      for (let column = 0; column < 8; column++) {
+        if (dummyBoard[row][column].color === "black") {
+          const isChess = PiecesMovingLogic(
+            dummyBoard,
+            isKingMove && clickedRow ? clickedRow : whiteKingPosition.row,
+            isKingMove && clickedColumn
+              ? clickedColumn
+              : whiteKingPosition.column,
+            row,
+            column
+          );
+
+          if (isChess) {
+            if (check.isChecked !== true)
               updateIsChecked({ isChecked: true, color: "white" });
-              console.log("white CHECK!");
-              return true;
-            }
+            console.log("white CHECK!");
+            return true;
           }
         }
       }
-    } else {
-      for (let row = 0; row < 8; row++) {
-        for (let column = 0; column < 8; column++) {
-          if (board[row][column].color === "white") {
-            const isChess = PiecesMovingLogic(
-              board,
-              blackKingPosition.row,
-              blackKingPosition.column,
-              row,
-              column
-            );
+    }
 
-            if (isChess) {
+    return false;
+  };
+
+  const isCheckOnBlack = (
+    dummyBoard: BoardProps[][] = board,
+    clickedRow: number | undefined = undefined,
+    clickedColumn: number | undefined = undefined
+  ) => {
+    var isKingMove = false;
+    if (clickedColumn !== undefined && clickedRow !== undefined) {
+      isKingMove =
+        dummyBoard[clickedRow][clickedColumn].value === "king" &&
+        dummyBoard[clickedRow][clickedColumn].color === "black";
+    }
+
+    for (let row = 0; row < 8; row++) {
+      for (let column = 0; column < 8; column++) {
+        if (dummyBoard[row][column].color === "white") {
+          const isChess = PiecesMovingLogic(
+            dummyBoard,
+            isKingMove && clickedRow ? clickedRow : blackKingPosition.row,
+            isKingMove && clickedColumn
+              ? clickedColumn
+              : blackKingPosition.column,
+            row,
+            column
+          );
+
+          if (isChess) {
+            if (check.isChecked !== true)
               updateIsChecked({ isChecked: true, color: "black" });
-              console.log("black CHECK!");
-              return true;
-            }
+            console.log("black CHECK!");
+            return true;
           }
         }
       }
@@ -218,57 +193,218 @@ export const Board: React.FC<AppProps> = (props) => {
   };
 
   const isCheckMate = () => {
-    console.log(
-      "did enter that checkmate:  " + check.color === "black",
-      props.currentTurn === "black"
-    );
+    console.log("did enter that checkmate:  ", props.currentTurn === "black");
 
-    if (check.isChecked) {
-      if (check.color === "black" && props.currentTurn === "black") {
-        for (let row = 0; row < 8; row++) {
-          for (let column = 0; column < 8; column++) {
-            if (board[row][column].color === "white") {
-              const isKingHasMoves = canKingMove(
-                blackKingPosition.row,
-                blackKingPosition.column
+    const isCheckOnWhiteKing = isCheckOnWhite();
+    const isCheckOnBlackKing = isCheckOnBlack();
+
+    if (isCheckOnBlackKing) {
+      const isKingHasMoves = canKingMove(
+        blackKingPosition.row,
+        blackKingPosition.column
+      );
+      console.log("can he move:" + isKingHasMoves);
+      if (isKingHasMoves) return false;
+
+      const canCaptureThreat = canCapturePieceThatThreatsKing(
+        blackKingPosition.row,
+        blackKingPosition.column
+      );
+      console.log("can capture:" + canCaptureThreat);
+
+      if (canCaptureThreat) return false;
+
+      const isPossibleBlock = isAnyPieceCanBlock(
+        blackKingPosition.row,
+        blackKingPosition.column
+      );
+      console.log("can block:" + isPossibleBlock);
+
+      if (isPossibleBlock) return false;
+
+      return true;
+    } else if (isCheckOnWhiteKing) {
+      const isKingHasMoves = canKingMove(
+        whiteKingPosition.row,
+        whiteKingPosition.column
+      );
+      console.log("can he move:" + isKingHasMoves);
+      if (isKingHasMoves) return false;
+
+      const canCaptureThreat = canCapturePieceThatThreatsKing(
+        whiteKingPosition.row,
+        whiteKingPosition.column
+      );
+      console.log("can capture:" + canCaptureThreat);
+
+      if (canCaptureThreat) return false;
+
+      const isPossibleBlock = isAnyPieceCanBlock(
+        whiteKingPosition.row,
+        whiteKingPosition.column
+      );
+      console.log("can block:" + isPossibleBlock);
+
+      if (isPossibleBlock) return false;
+
+      return true;
+    }
+
+    return false;
+  };
+
+  const isAnyPieceCanBlock = (kingRow: number, kingColumn: number) => {
+    var threatCoords: { row: number; column: number } = findThreat(
+      kingRow,
+      kingColumn
+    );
+    if (board[threatCoords.row][threatCoords.column].value === "knight")
+      return false;
+
+    if (
+      Math.abs(threatCoords.row - kingRow) <= 1 &&
+      Math.abs(threatCoords.column - kingColumn) <= 1
+    )
+      return false;
+
+    if (threatCoords.row === kingRow) {
+      for (var row = 0; row < 8; row++) {
+        for (var column = 0; column < 8; column++) {
+          if (board[row][column].color !== board[kingRow][kingColumn].color) {
+            for (
+              var columnBetween = Math.max(threatCoords.column, column) - 1;
+              columnBetween > Math.min(threatCoords.column, column);
+              columnBetween--
+            ) {
+              const isBlockPossible = !willMoveCauseSelfCheck(
+                kingRow,
+                columnBetween,
+                row,
+                column
               );
-              console.log("can he move:" + isKingHasMoves);
-              return isKingHasMoves;
-            }
-          }
-        }
-      } else {
-        for (let row = 0; row < 8; row++) {
-          for (let column = 0; column < 8; column++) {
-            if (board[row][column].color === "black") {
-              const isKingHasMoves = canKingMove(
-                whiteKingPosition.row,
-                whiteKingPosition.column
-              );
-              console.log("can he move:" + isKingHasMoves);
-              return isKingHasMoves;
+
+              if (isBlockPossible) return true;
             }
           }
         }
       }
     }
+
+    if (threatCoords.column === kingColumn) {
+      for (var row = 0; row < 8; row++) {
+        for (var column = 0; column < 8; column++) {
+          if (board[row][column].color !== board[kingRow][kingColumn].color) {
+            for (
+              var rowBetween = Math.max(threatCoords.row, row) - 1;
+              rowBetween > Math.min(threatCoords.row, row);
+              rowBetween--
+            ) {
+              const isBlockPossible = !willMoveCauseSelfCheck(
+                rowBetween,
+                kingColumn,
+                row,
+                column
+              );
+
+              console.log("is block possible   ", isBlockPossible);
+
+              if (isBlockPossible) return true;
+            }
+          }
+        }
+      }
+    }
+
+    return false;
+  };
+
+  const canCapturePieceThatThreatsKing = (
+    kingRow: number,
+    kingColumn: number
+  ) => {
+    var threatCoords: { row: number; column: number } = findThreat(
+      kingRow,
+      kingColumn
+    );
+    const color = board[kingRow][kingColumn].color;
+
+    for (let row = 0; row < 8; row++) {
+      for (let column = 0; column < 8; column++) {
+        var willCauseSelfCheck = true;
+        if (board[row][column].color === color) {
+          willCauseSelfCheck = willMoveCauseSelfCheck(
+            threatCoords.row,
+            threatCoords.column,
+            row,
+            column
+          );
+        }
+
+        if (!willCauseSelfCheck) {
+          return true;
+        }
+      }
+    }
+
+    return false;
+  };
+
+  const findThreat = (kingRow: number, kingColumn: number) => {
+    const color =
+      board[kingRow][kingColumn].color === "white" ? "black" : "white";
+
+    type kingCoords = {
+      row: number;
+      column: number;
+    };
+
+    for (let row = 0; row < 8; row++) {
+      for (let column = 0; column < 8; column++) {
+        if (board[row][column].color === color) {
+          const isValidMove = PiecesMovingLogic(
+            board,
+            kingRow,
+            kingColumn,
+            row,
+            column
+          );
+          if (isValidMove) return { row, column };
+        }
+      }
+    }
+
+    return (undefined as any) as kingCoords;
   };
 
   const canKingMove = (kingRow: number, kingColumn: number) => {
-    for (let row = -1; row < 2; row++) {
-      for (let column = -1; column < 2; column++) {
+    const color = board[kingRow][kingColumn].color;
+    var currentRow, currentColumn;
+
+    if (color === "white") {
+      currentRow = whiteKingPosition.row;
+      currentColumn = whiteKingPosition.column;
+    } else {
+      currentRow = blackKingPosition.row;
+      currentColumn = blackKingPosition.column;
+    }
+
+    for (let row = -1; row <= 1; row++) {
+      for (let column = -1; column <= 1; column++) {
         if (row === 0 && column === 0) continue;
 
-        console.log(kingRow + row, kingColumn + column);
         if (board[kingRow + row] && board[kingRow + row][kingColumn + column]) {
-          if (row === 1 && column === -1) {
-            console.log("/");
-          }
-          const isValidMove = isKingMovePossible();
+          const isPath =
+            board[kingRow + row][kingColumn + column].color !== color;
+          const isValidMove = !willMoveCauseSelfCheck(
+            kingRow + row,
+            kingColumn + column,
+            currentRow,
+            currentColumn
+          );
 
-          console.log("???  " + isValidMove);
-          if (isValidMove) {
-            console.log(row, column);
+          if (isPath && isValidMove) {
+            console.log(board);
+            console.log(kingRow + row, kingColumn + column);
             return true;
           }
         }
@@ -298,7 +434,11 @@ export const Board: React.FC<AppProps> = (props) => {
 
       newBoard[row][column].isCellMarked = false;
       updateBoard(newBoard);
-      isCheckToNextTurn();
+
+      console.log("turn: ", props.currentTurn);
+      var isMate = isCheckMate();
+      console.log("is check mate:  ", isMate);
+      if (isMate) alert("VICTORY");
       props.updateTurn(props.currentTurn === "white" ? "black" : "white");
     }
   };
@@ -343,22 +483,17 @@ export const Board: React.FC<AppProps> = (props) => {
   ) => {
     newBoard[row][column].isCellMarked = !newBoard[row][column].isCellMarked;
 
-    if (isCellMarked) resetCell(newBoard, row, column);
+    if (isCellMarked) {
+      resetCell(newBoard, row, column);
+    }
 
     markCell(!isCellMarked);
     markCellCoords({ row, column });
     updateBoard(newBoard);
   };
 
-  React.useEffect(() => {
-    const isFinished: boolean | undefined = isCheckMate();
-
-    if (isFinished) alert("VICTORY");
-  }, [check.isChecked]);
-
   const onHoverEvent = (row: number, column: number) => {
     const hoverBoard: boolean[][] = initArray();
-
     for (let i = 0; i < 8; i++) {
       for (let j = 0; j < 8; j++) {
         const isValidMove = PiecesMovingLogic(board, i, j, row, column);
@@ -367,7 +502,6 @@ export const Board: React.FC<AppProps> = (props) => {
         }
       }
     }
-
     updatePossibleMoves(hoverBoard);
   };
 
